@@ -1,10 +1,59 @@
-# Insanely Fast Whisper
+# 🎙️ Insanely Fast Whisper
 
-An opinionated CLI to transcribe Audio files w/ Whisper on-device! Powered by 🤗 *Transformers*, *Optimum* & *flash-attn*
+<p align="center">
+  <strong>Blazingly fast speech-to-text transcription powered by Whisper, Transformers & Flash Attention</strong>
+</p>
 
-**TL;DR** - Transcribe **150** minutes (2.5 hours) of audio in less than **98** seconds - with [OpenAI's Whisper Large v3](https://huggingface.co/openai/whisper-large-v3). Blazingly fast transcription is now a reality!⚡️
+<p align="center">
+  <a href="#-quick-start">Quick Start</a> •
+  <a href="#-features">Features</a> •
+  <a href="#-web-ui--api">Web UI & API</a> •
+  <a href="#-cli">CLI</a> •
+  <a href="#-installation">Installation</a> •
+  <a href="#-acknowledgements">Credits</a>
+</p>
 
-```
+---
+
+## 🚀 TL;DR
+
+Transcribe **150 minutes** (2.5 hours) of audio in less than **98 seconds** using [OpenAI's Whisper Large v3](https://huggingface.co/openai/whisper-large-v3) with Flash Attention 2. Achieve **~75x real-time** transcription speed!
+
+**Three ways to use:**
+
+| Interface | Best For | Command | Port |
+|-----------|----------|---------|------|
+| 🎤 **Gradio Web UI** | Interactive testing, microphone | `./start_gradio.sh` | Auto-detect (7860+) |
+| 🚀 **FastAPI Server** | Production APIs, integration | `./start_server.sh` | 8000 |
+| ⚡ **CLI Tool** | Quick transcriptions, scripts | `insanely-fast-whisper --file-name audio.mp3` | N/A |
+
+## 🎉 What's New in This Fork
+
+This enhanced version adds:
+
+- **🎤 Gradio Web UI** - Interactive interface with:
+  - Real-time microphone streaming with accumulation
+  - File upload with visual waveform trimming
+  - Support for 20+ languages
+  - Automatic free port detection
+  - GPU acceleration with Flash Attention 2
+  
+- **🚀 FastAPI REST API Server** with:
+  - OpenAPI/Swagger documentation
+  - File upload and URL transcription endpoints
+  - Model preloading and cache management
+  - CORS support for web integration
+  - Health check and monitoring endpoints
+
+- **⚡ Enhanced Performance**:
+  - Dynamic port allocation (no conflicts)
+  - Optimized batch processing
+  - GPU memory management
+  - Rate limiting for streaming
+
+## 📦 Installation
+
+```bash
 pipx install insanely-fast-whisper==0.0.15 --force
 ```
 
@@ -24,11 +73,85 @@ Not convinced? Here are some benchmarks we ran on a Nvidia A100 - 80GB 👇
 | large-v2 (Faster Whisper) (`fp16` + `beam_size [1]`) | ~9.23 (*9 min 23 sec*)            |
 | large-v2 (Faster Whisper) (`8-bit` + `beam_size [1]`) | ~8 (*8 min 15 sec*)            |
 
-P.S. We also ran the benchmarks on a [Google Colab T4 GPU](/notebooks/) instance too!
+*P.S. We also ran benchmarks on a [Google Colab T4 GPU](/notebooks/) instance!*
 
-P.P.S. This project originally started as a way to showcase benchmarks for Transformers, but has since evolved into a lightweight CLI for people to use. This is purely community driven. We add whatever community seems to have a strong demand for! 
+*P.P.S. This project originally started as a way to showcase benchmarks for Transformers but has since evolved into a full-featured transcription suite. This is purely community driven!*
 
-## 🆕 Blazingly fast transcriptions via your terminal! ⚡️
+---
+
+## ✨ Features
+
+- **⚡ Lightning Fast**: ~75x faster than real-time with Flash Attention 2
+- **🎤 Multiple Interfaces**: Web UI, REST API, and CLI
+- **🌍 Multi-Language**: Support for 20+ languages with auto-detection
+- **🎯 Flexible Input**: Microphone streaming, file upload, or URLs
+- **🔧 Highly Configurable**: Batch size, models, devices, and more
+- **📊 Production Ready**: Health checks, monitoring, and API documentation
+- **💾 Memory Efficient**: GPU cache management and optimization
+- **🔄 Real-time Streaming**: Live transcription with accumulation
+
+---
+
+## 🚀 Quick Start
+
+### Option 1: 🎤 Gradio Web UI (Recommended for Interactive Use)
+
+Launch the beautiful web interface with microphone support:
+
+```bash
+./start_gradio.sh
+```
+
+**Features:**
+- 🎤 **Real-time microphone streaming** with automatic accumulation
+- 📁 **File upload** with visual trimming controls
+- 🌍 **20+ languages** supported
+- ⚡ **GPU accelerated** with Flash Attention 2
+- 🔄 **Auto-detects free port** (starts from 7860)
+
+The UI will automatically launch on a free port and show you the access URL.
+
+### Option 2: 🚀 FastAPI REST API (For Integration)
+
+Start the REST API server:
+
+```bash
+./start_server.sh
+# or
+python api_server.py
+```
+
+**API Endpoints:**
+- 📚 **Interactive Docs**: http://localhost:8000/docs
+- 💚 **Health Check**: http://localhost:8000/health
+- 🎙️ **Transcribe**: POST http://localhost:8000/transcribe
+- 🌐 **From URL**: POST http://localhost:8000/transcribe/url
+- 📋 **List Models**: GET http://localhost:8000/models
+- 🗑️ **Clear Cache**: DELETE http://localhost:8000/cache
+
+**Quick Example:**
+```python
+import requests
+
+with open('audio.mp3', 'rb') as f:
+    files = {'file': f}
+    data = {'use_flash': True, 'batch_size': 24}
+    response = requests.post('http://localhost:8000/transcribe', 
+                            files=files, data=data)
+    print(response.json()['text'])
+```
+
+**cURL Example:**
+```bash
+curl -X POST "http://localhost:8000/transcribe" \
+  -F "file=@audio.mp3" \
+  -F "use_flash=true" \
+  -F "batch_size=24"
+```
+
+### Option 3: ⚡ Command Line Interface
+
+Perfect for quick, one-off transcriptions:
 
 We've added a CLI to enable fast transcriptions. Here's how you can use it:
 
@@ -125,12 +248,16 @@ The root cause of this problem is still unknown, however, you can resolve this b
 
 The *mps* backend isn't as optimised as CUDA, hence is way more memory hungry. Typically you can run with `--batch-size 4` without any issues (should use roughly 12GB GPU VRAM). Don't forget to set `--device-id mps`.
 
-## How to use Whisper without a CLI?
+---
+
+## 📚 Advanced Usage
+
+### Using Whisper Programmatically
 
 <details>
-<summary>All you need to run is the below snippet:</summary>
+<summary>Python snippet for direct usage:</summary>
 
-```
+```bash
 pip install --upgrade transformers optimum accelerate
 ```
 
@@ -154,19 +281,180 @@ outputs = pipe(
     return_timestamps=True,
 )
 
-outputs
+print(outputs)
 ```
 </details>
 
-## Acknowledgements
+---
 
-1. [OpenAI Whisper](https://github.com/openai/whisper) team for open sourcing such a brilliant check point.
-2. Hugging Face Transformers team, specifically [Arthur](https://github.com/ArthurZucker), [Patrick](https://github.com/patrickvonplaten), [Sanchit](https://github.com/sanchit-gandhi) & [Yoach](https://github.com/ylacombe)  (alphabetical order) for continuing to maintain Whisper in Transformers.
-3. Hugging Face [Optimum](https://github.com/huggingface/optimum) team for making the BetterTransformer API so easily accessible.
-4. [Patrick Arminio](https://github.com/patrick91) for helping me tremendously to put together this CLI.
+## 🙏 Acknowledgements
 
-## Community showcase
+This project builds upon incredible work from the community:
 
-1. @ochen1 created a brilliant MVP for a CLI here: https://github.com/ochen1/insanely-fast-whisper-cli (Try it out now!)
-2. @arihanv created an app (Shush) using NextJS (Frontend) & Modal (Backend): https://github.com/arihanv/Shush (Check it outtt!)
-3. @kadirnar created a python package on top of the transformers with optimisations: https://github.com/kadirnar/whisper-plus (Go go go!!!)
+### Core Technologies
+1. **[OpenAI Whisper](https://github.com/openai/whisper)** - For open sourcing this brilliant speech recognition model
+2. **[Hugging Face Transformers](https://github.com/huggingface/transformers)** team:
+   - [Arthur Zucker](https://github.com/ArthurZucker)
+   - [Patrick von Platen](https://github.com/patrickvonplaten)
+   - [Sanchit Gandhi](https://github.com/sanchit-gandhi)
+   - [Yoach Lacombe](https://github.com/ylacombe)
+   
+   For maintaining and improving Whisper in Transformers
+   
+3. **[Hugging Face Optimum](https://github.com/huggingface/optimum)** - For making BetterTransformer API easily accessible
+4. **[Flash Attention](https://github.com/Dao-AILab/flash-attention)** team - For the incredible speedup
+5. **[Gradio](https://gradio.app)** team - For the amazing web UI framework
+6. **[FastAPI](https://fastapi.tiangolo.com/)** - For the elegant API framework
+
+### Original Development
+- **[VB (Vaibhav Srivastav)](https://github.com/Vaibhavs10)** - Original creator and maintainer
+- **[Patrick Arminio](https://github.com/patrick91)** - For helping tremendously with the CLI
+
+### Enhanced Features
+- **Web UI & API Server** - Adapted and enhanced from community feedback and [Whisper-Fast-Cpu-OpenVino](https://github.com/) project patterns
+- **Dynamic port detection** - Community-driven improvement
+- **Streaming support** - Built for real-world use cases
+
+### Special Thanks
+- **[@li-yifei](https://github.com/li-yifei)** - For Flash Attention installation guidance
+- **[@pto2k](https://github.com/pto2k)** - For Windows CUDA debugging
+- All contributors and users providing feedback and improvements
+
+## 🎛️ Server Management
+
+### Gradio UI Commands
+
+```bash
+# Start (auto-detects free port)
+./start_gradio.sh
+
+# Stop
+pkill -f gradio_app.py
+
+# Custom configuration
+python gradio_app.py --model openai/whisper-medium --device cuda:0 --batch-size 16
+
+# Check status
+lsof -i :7860  # or whatever port it's using
+```
+
+### FastAPI Server Commands
+
+```bash
+# Start
+./start_server.sh
+# or
+python api_server.py
+
+# Stop
+pkill -f api_server.py
+
+# Check status
+curl http://localhost:8000/health
+```
+
+### Available Models
+
+Both interfaces support all Whisper models:
+- `openai/whisper-large-v3` (best quality, recommended)
+- `openai/whisper-large-v2`
+- `openai/whisper-medium`
+- `openai/whisper-small`
+- `openai/whisper-base`
+- `distil-whisper/distil-large-v2` (faster, smaller)
+- `distil-whisper/distil-medium.en`
+- `distil-whisper/distil-small.en`
+
+### Configuration
+
+**Gradio UI Options:**
+- `--model`: Model name (default: openai/whisper-large-v3)
+- `--device`: GPU device (default: cuda:2)
+- `--host`: Server host (default: 0.0.0.0)
+- `--port`: Server port (default: auto-detect from 7860)
+- `--batch-size`: Batch size (default: 24)
+- `--use-flash`: Enable Flash Attention 2 (default: True)
+- `--share`: Create Gradio public URL
+
+**FastAPI Server:**
+Edit `api_server.py` to change GPU device, model, or batch size defaults.
+
+### Troubleshooting
+
+**Port already in use:**
+```bash
+# Find and kill process
+lsof -i :7860  # or :8000 for FastAPI
+kill -9 <PID>
+```
+
+**Out of memory:**
+- Reduce batch size: `--batch-size 12`
+- Use smaller model: `--model openai/whisper-medium`
+- Clear GPU cache via API: `curl -X DELETE http://localhost:8000/cache`
+
+**Gradio not finding free port:**
+The app automatically scans 100 ports starting from 7860. If all are occupied, specify manually: `--port 9000`
+
+**TorchCodec / FFmpeg errors:**
+```
+Error: Could not load libtorchcodec...FFmpeg not installed
+```
+✅ **FIXED**: This is already handled! The environment variable `TRANSFORMERS_NO_TORCHCODEC=1` is set in all scripts and code. No FFmpeg installation needed. See [TORCHCODEC_FIX.md](TORCHCODEC_FIX.md) for details.
+
+## 📊 Performance Comparison
+
+| Interface | Use Case | Pros | Cons |
+|-----------|----------|------|------|
+| **Gradio UI** | Interactive testing, microphone input | Beautiful UI, real-time streaming, easy trimming | Web-only access |
+| **FastAPI** | Production, batch processing, integration | REST API, scriptable, OpenAPI docs | No web UI |
+| **CLI** | One-off transcriptions, scripting | Simple, no server needed | No streaming, no interactive features |
+
+## 📁 Project Files
+
+- `gradio_app.py` - Gradio web UI server
+- `api_server.py` - FastAPI REST API server
+- `start_gradio.sh` - Launch script for Gradio UI
+- `start_server.sh` - Launch script for FastAPI server
+- `src/insanely_fast_whisper/cli.py` - Original CLI tool
+
+---
+
+## 🌟 Community Showcase
+
+Amazing projects built by the community:
+
+1. **[@ochen1](https://github.com/ochen1)** - [insanely-fast-whisper-cli](https://github.com/ochen1/insanely-fast-whisper-cli) - Brilliant MVP CLI wrapper
+2. **[@arihanv](https://github.com/arihanv)** - [Shush](https://github.com/arihanv/Shush) - NextJS frontend with Modal backend
+3. **[@kadirnar](https://github.com/kadirnar)** - [whisper-plus](https://github.com/kadirnar/whisper-plus) - Enhanced Python package with optimizations
+
+*Want to add your project? Open a PR!*
+
+---
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! This is a community-driven project. Feel free to:
+- Open issues for bugs or feature requests
+- Submit pull requests
+- Share your use cases and feedback
+- Add to the community showcase
+
+---
+
+<p align="center">
+  <strong>Made with ❤️ by the community</strong><br>
+  <sub>Powered by 🤗 Transformers • OpenAI Whisper • Flash Attention</sub>
+</p>
+
+<p align="center">
+  <a href="https://github.com/Vaibhavs10/insanely-fast-whisper">⭐ Star on GitHub</a> •
+  <a href="https://github.com/Vaibhavs10/insanely-fast-whisper/issues">🐛 Report Bug</a> •
+  <a href="https://github.com/Vaibhavs10/insanely-fast-whisper/issues">💡 Request Feature</a>
+</p>

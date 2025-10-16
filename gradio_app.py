@@ -468,14 +468,8 @@ def create_interface(batch_size: int, model_name: str, device: str):
                     LOGGER.warning("No audio provided")
                     return "⚠️ No audio file selected", "", [], "", []
                 
-                # Rate limiting
-                current_time = time.time()
-                if current_time - LAST_CALL_TIME["upload"] < MIN_CALL_INTERVAL:
-                    LOGGER.warning("Upload called too soon, throttling")
-                    time.sleep(MIN_CALL_INTERVAL - (current_time - LAST_CALL_TIME["upload"]))
-                
-                LAST_CALL_TIME["upload"] = current_time
-                LOGGER.info("Rate limiting passed")
+                # No rate limiting for file uploads - each upload is intentional
+                LOGGER.info("Starting file upload processing...")
                 
                 # Apply trimming
                 LOGGER.info("Processing audio data...")
@@ -517,8 +511,10 @@ def create_interface(batch_size: int, model_name: str, device: str):
                 
                 # Create tuple for transcribe function
                 audio_to_process = (sample_rate, trimmed_audio)
-                LOGGER.info(f"Calling transcribe with language={language_choice}, task={task_choice}, timestamps={ts_flag}")
+                LOGGER.info(f"🎯 Starting transcription: language={language_choice}, task={task_choice}, timestamps={ts_flag}")
+                LOGGER.info(f"📊 Audio duration: {trimmed_duration:.1f}s, batch_size={batch_size}")
                 
+                start_time = time.time()
                 text, segments = transcribe(
                     audio_to_process,
                     language_choice,
@@ -526,8 +522,9 @@ def create_interface(batch_size: int, model_name: str, device: str):
                     ts_flag,
                     batch_size,
                 )
+                elapsed = time.time() - start_time
                 
-                LOGGER.info(f"Transcription completed: {len(text) if text else 0} characters")
+                LOGGER.info(f"✅ Transcription completed in {elapsed:.2f}s: {len(text) if text else 0} characters")
                 
                 clean_segments = copy.deepcopy(segments) if segments else []
                 gc.collect()
@@ -643,7 +640,7 @@ def main() -> None:
     LOGGER.info(f"🌐 Network URL: http://{args.host}:{args.port}")
     LOGGER.info("=" * 60)
     
-    interface.queue(default_concurrency_limit=1).launch(
+    interface.queue(default_concurrency_limit=2, max_size=10).launch(
         server_name=args.host,
         server_port=args.port,
         share=args.share,

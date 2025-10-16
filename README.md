@@ -19,12 +19,13 @@
 
 Transcribe **150 minutes** (2.5 hours) of audio in less than **98 seconds** using [OpenAI's Whisper Large v3](https://huggingface.co/openai/whisper-large-v3) with Flash Attention 2. Achieve **~75x real-time** transcription speed!
 
-**Three ways to use:**
+**Four ways to use:**
 
 | Interface | Best For | Command | Port |
 |-----------|----------|---------|------|
 | 🎤 **Gradio Web UI** | Interactive testing, microphone | `./start_gradio.sh` | Auto-detect (7860+) |
 | 🚀 **FastAPI Server** | Production APIs, integration | `./start_server.sh` | 8000 |
+| 🌐 **Web Client** | Browser-based testing | Open `web_client.html` | 8000 (uses FastAPI) |
 | ⚡ **CLI Tool** | Quick transcriptions, scripts | `insanely-fast-whisper --file-name audio.mp3` | N/A |
 
 ## 🎉 What's New in This Fork
@@ -44,6 +45,13 @@ This enhanced version adds:
   - Model preloading and cache management
   - CORS support for web integration
   - Health check and monitoring endpoints
+
+- **🌐 Modern Web Client** with:
+  - Beautiful gradient UI design
+  - Dual input modes (file upload & URL)
+  - Live server health monitoring
+  - Real-time transcription results
+  - GPU and Flash Attention status display
 
 - **⚡ Enhanced Performance**:
   - Dynamic port allocation (no conflicts)
@@ -149,7 +157,24 @@ curl -X POST "http://localhost:8000/transcribe" \
   -F "batch_size=24"
 ```
 
-### Option 3: ⚡ Command Line Interface
+### Option 3: 🌐 Web Client (Browser UI for FastAPI)
+
+A modern, beautiful web interface that connects to the FastAPI server:
+
+**Setup:**
+1. Start the FastAPI server: `./start_server.sh`
+2. Open `web_client.html` in your browser
+
+**Features:**
+- 🎨 **Modern UI** - Beautiful gradient design with smooth animations
+- 📤 **Dual Input** - Upload files or provide URLs
+- ⚡ **Live Status** - Real-time server health and GPU monitoring
+- 🎯 **Easy Configuration** - Choose models, batch sizes, Flash Attention
+- 📊 **Results Display** - View transcription with metadata (duration, model, GPU)
+
+The web client provides a user-friendly alternative to the API documentation interface.
+
+### Option 4: ⚡ Command Line Interface
 
 Perfect for quick, one-off transcriptions:
 
@@ -400,23 +425,28 @@ The app automatically scans 100 ports starting from 7860. If all are occupied, s
 ```
 Error: Could not load libtorchcodec...FFmpeg not installed
 ```
-✅ **FIXED**: This is already handled! The environment variable `TRANSFORMERS_NO_TORCHCODEC=1` is set in all scripts and code. No FFmpeg installation needed. See [TORCHCODEC_FIX.md](TORCHCODEC_FIX.md) for details.
+✅ **FIXED**: This is already handled! The environment variable `TRANSFORMERS_NO_TORCHCODEC=1` is set in all scripts and code. No FFmpeg installation needed.
 
 ## 📊 Performance Comparison
 
 | Interface | Use Case | Pros | Cons |
 |-----------|----------|------|------|
 | **Gradio UI** | Interactive testing, microphone input | Beautiful UI, real-time streaming, easy trimming | Web-only access |
-| **FastAPI** | Production, batch processing, integration | REST API, scriptable, OpenAPI docs | No web UI |
+| **FastAPI** | Production, batch processing, integration | REST API, scriptable, OpenAPI docs | Requires programming |
+| **Web Client** | Browser-based testing | No coding, beautiful UI, easy to use | Requires FastAPI running |
 | **CLI** | One-off transcriptions, scripting | Simple, no server needed | No streaming, no interactive features |
 
 ## 📁 Project Files
 
-- `gradio_app.py` - Gradio web UI server
-- `api_server.py` - FastAPI REST API server
-- `start_gradio.sh` - Launch script for Gradio UI
-- `start_server.sh` - Launch script for FastAPI server
-- `src/insanely_fast_whisper/cli.py` - Original CLI tool
+| File | Description |
+|------|-------------|
+| `gradio_app.py` | Gradio web UI server with microphone support |
+| `api_server.py` | FastAPI REST API server (GPU 2) |
+| `web_client.html` | Modern browser-based web client for FastAPI |
+| `start_gradio.sh` | Launch script for Gradio UI |
+| `start_server.sh` | Launch script for FastAPI server |
+| `test_api.py` | Python test script for API endpoints |
+| `src/insanely_fast_whisper/cli.py` | Original CLI tool |
 
 ---
 

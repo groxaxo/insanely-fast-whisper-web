@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insanely Fast Whisper - Web Client</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .status {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+            font-size: 0.9em;
+        }
+
+        .status-label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .status-value {
+            color: #667eea;
+            font-weight: 500;
+        }
+
+        .upload-section {
+            margin: 30px 0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        input[type="file"],
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        input[type="file"]:focus,
+        input[type="text"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .result.active {
+            display: block;
+        }
+
+        .result-header {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .result-text {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            line-height: 1.6;
+            color: #333;
+            margin-bottom: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .result-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            font-size: 0.9em;
+        }
+
+        .meta-item {
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .meta-label {
+            font-weight: 600;
+            color: #666;
+            font-size: 0.85em;
+            text-transform: uppercase;
+        }
+
+        .meta-value {
+            color: #333;
+            margin-top: 5px;
+        }
+
+        .error {
+            display: none;
+            background: #fee;
+            border-left: 4px solid #f44;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            color: #c33;
+        }
+
+        .error.active {
+            display: block;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 1em;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            width: auto;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎙️ Insanely Fast Whisper</h1>
+        <p class="subtitle">High-performance audio transcription powered by GPU 2</p>
+
+        <div class="status" id="status">
+            <div class="status-item">
+                <span class="status-label">Server Status:</span>
+                <span class="status-value" id="serverStatus">Checking...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">GPU:</span>
+                <span class="status-value" id="gpuName">-</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Flash Attention 2:</span>
+                <span class="status-value" id="flashStatus">-</span>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('file', event)">Upload File</button>
+            <button class="tab" onclick="switchTab('url', event)">From URL</button>
+        </div>
+
+        <!-- File Upload Tab -->
+        <div class="tab-content active" id="fileTab">
+            <div class="upload-section">
+                <div class="form-group">
+                    <label for="audioFile">Select Audio File</label>
+                    <input type="file" id="audioFile" accept="audio/*,video/*">
+                </div>
+
+                <div class="form-group">
+                    <label for="model">Model</label>
+                    <select id="model">
+                        <option value="openai/whisper-large-v3">Whisper Large v3 (Best Quality)</option>
+                        <option value="openai/whisper-large-v2">Whisper Large v2</option>
+                        <option value="distil-whisper/distil-large-v2">Distil Whisper Large v2 (Faster)</option>
+                        <option value="openai/whisper-medium">Whisper Medium</option>
+                        <option value="openai/whisper-small">Whisper Small</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="batchSize">Batch Size (reduce if out of memory)</label>
+                    <select id="batchSize">
+                        <option value="12">12 (Safe)</option>
+                        <option value="16">16</option>
+                        <option value="24" selected>24 (Default)</option>
+                        <option value="32">32 (Fast)</option>
+                    </select>
+                </div>
+
+                <div class="form-group checkbox-group">
+                    <input type="checkbox" id="useFlash" checked>
+                    <label for="useFlash" style="margin: 0;">Use Flash Attention 2 (3x faster)</label>
+                </div>
+
+                <button onclick="transcribeFile()">Transcribe Audio</button>
+            </div>
+        </div>
+
+        <!-- URL Tab -->
+        <div class="tab-content" id="urlTab">
+            <div class="upload-section">
+                <div class="form-group">
+                    <label for="audioUrl">Audio URL</label>
+                    <input type="text" id="audioUrl" placeholder="https://example.com/audio.mp3">
+                </div>
+
+                <div class="form-group">
+                    <label for="modelUrl">Model</label>
+                    <select id="modelUrl">
+                        <option value="openai/whisper-large-v3">Whisper Large v3 (Best Quality)</option>
+                        <option value="openai/whisper-large-v2">Whisper Large v2</option>
+                        <option value="distil-whisper/distil-large-v2">Distil Whisper Large v2 (Faster)</option>
+                        <option value="openai/whisper-medium">Whisper Medium</option>
+                        <option value="openai/whisper-small">Whisper Small</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="batchSizeUrl">Batch Size</label>
+                    <select id="batchSizeUrl">
+                        <option value="12">12 (Safe)</option>
+                        <option value="16">16</option>
+                        <option value="24" selected>24 (Default)</option>
+                        <option value="32">32 (Fast)</option>
+                    </select>
+                </div>
+
+                <div class="form-group checkbox-group">
+                    <input type="checkbox" id="useFlashUrl" checked>
+                    <label for="useFlashUrl" style="margin: 0;">Use Flash Attention 2 (3x faster)</label>
+                </div>
+
+                <button onclick="transcribeUrl()">Transcribe from URL</button>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Transcribing audio... This may take a moment.</p>
+        </div>
+
+        <div class="error" id="error"></div>
+
+        <div class="result" id="result">
+            <div class="result-header">Transcription Result</div>
+            <div class="result-text" id="resultText"></div>
+            <div class="result-meta">
+                <div class="meta-item">
+                    <div class="meta-label">Duration</div>
+                    <div class="meta-value" id="duration">-</div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">Model</div>
+                    <div class="meta-value" id="modelUsed">-</div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">GPU</div>
+                    <div class="meta-value" id="gpuUsed">-</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+
+        // Check server health on load
+        async function checkHealth() {
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                
+                document.getElementById('serverStatus').textContent = data.status === 'healthy' ? '✓ Online' : '✗ Offline';
+                document.getElementById('gpuName').textContent = `${data.gpu_name} (GPU ${data.gpu_id})`;
+                document.getElementById('flashStatus').textContent = data.flash_attention ? '✓ Enabled' : '✗ Disabled';
+            } catch (error) {
+                document.getElementById('serverStatus').textContent = '✗ Offline';
+                showError('Cannot connect to server. Make sure it\'s running on http://localhost:8000');
+            }
+        }
+
+        function switchTab(tab, event) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(tab + 'Tab').classList.add('active');
+        }
+
+        async function transcribeFile() {
+            const fileInput = document.getElementById('audioFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                showError('Please select an audio file');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('model', document.getElementById('model').value);
+            formData.append('batch_size', document.getElementById('batchSize').value);
+            formData.append('use_flash', document.getElementById('useFlash').checked);
+            formData.append('return_timestamps', true);
+
+            await transcribe(`${API_BASE}/transcribe`, formData);
+        }
+
+        async function transcribeUrl() {
+            const url = document.getElementById('audioUrl').value;
+
+            if (!url) {
+                showError('Please enter an audio URL');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('url', url);
+            formData.append('model', document.getElementById('modelUrl').value);
+            formData.append('batch_size', document.getElementById('batchSizeUrl').value);
+            formData.append('use_flash', document.getElementById('useFlashUrl').checked);
+            formData.append('return_timestamps', true);
+
+            await transcribe(`${API_BASE}/transcribe/url`, formData);
+        }
+
+        async function transcribe(endpoint, formData) {
+            hideError();
+            hideResult();
+            showLoading();
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Transcription failed');
+                }
+
+                const data = await response.json();
+                showResult(data);
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function showLoading() {
+            document.getElementById('loading').classList.add('active');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').classList.remove('active');
+        }
+
+        function showResult(data) {
+            document.getElementById('resultText').textContent = data.text;
+            document.getElementById('duration').textContent = `${data.duration.toFixed(2)}s`;
+            document.getElementById('modelUsed').textContent = data.model;
+            document.getElementById('gpuUsed').textContent = data.gpu;
+            document.getElementById('result').classList.add('active');
+        }
+
+        function hideResult() {
+            document.getElementById('result').classList.remove('active');
+        }
+
+        function showError(message) {
+            document.getElementById('error').textContent = message;
+            document.getElementById('error').classList.add('active');
+        }
+
+        function hideError() {
+            document.getElementById('error').classList.remove('active');
+        }
+
+        // Check health on load
+        checkHealth();
+    </script>
+</body>
+</html>

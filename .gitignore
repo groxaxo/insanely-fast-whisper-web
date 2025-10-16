@@ -163,3 +163,11 @@ cython_debug/
 
 .vscode/
 .idea/
+
+# Project-specific
+uploads/
+outputs/
+*.mp3
+*.wav
+*.m4a
+*.flac

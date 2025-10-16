@@ -19,7 +19,9 @@
 
 Transcribe **150 minutes** (2.5 hours) of audio in less than **98 seconds** using [OpenAI's Whisper Large v3](https://huggingface.co/openai/whisper-large-v3) with Flash Attention 2. Achieve **~75x real-time** transcription speed!
 
-**Four ways to use:**
+**Plus: Full-featured TTS (Text-to-Speech) with voice management!**
+
+### Speech-to-Text (Transcription)
 
 | Interface | Best For | Command | Port |
 |-----------|----------|---------|------|
@@ -27,6 +29,13 @@ Transcribe **150 minutes** (2.5 hours) of audio in less than **98 seconds** usin
 | 🚀 **FastAPI Server** | Production APIs, integration | `./start_server.sh` | 8000 |
 | 🌐 **Web Client** | Browser-based testing | Open `web_client.html` | 8000 (uses FastAPI) |
 | ⚡ **CLI Tool** | Quick transcriptions, scripts | `insanely-fast-whisper --file-name audio.mp3` | N/A |
+
+### Text-to-Speech (TTS)
+
+| Interface | Best For | Command | Port |
+|-----------|----------|---------|------|
+| 🎙️ **TTS API Server** | Voice synthesis, custom voices | `./start_tts.sh` | 8001 |
+| 🌐 **TTS Web Client** | Voice management UI | Open `tts_client.html` | 8001 (uses TTS API) |
 
 ## 🎉 What's New in This Fork
 
@@ -52,6 +61,15 @@ This enhanced version adds:
   - Live server health monitoring
   - Real-time transcription results
   - GPU and Flash Attention status display
+
+- **🎙️ TTS (Text-to-Speech) System** with:
+  - Voice synthesis using Microsoft Edge TTS
+  - 300+ system voices in 100+ languages
+  - Custom voice upload and management
+  - Voice browsing with filters (language, type)
+  - Adjustable speech rate and pitch
+  - REST API for programmatic access
+  - Beautiful web interface for voice management
 
 - **⚡ Enhanced Performance**:
   - Dynamic port allocation (no conflicts)
@@ -173,6 +191,107 @@ A modern, beautiful web interface that connects to the FastAPI server:
 - 📊 **Results Display** - View transcription with metadata (duration, model, GPU)
 
 The web client provides a user-friendly alternative to the API documentation interface.
+
+---
+
+## 🎙️ Text-to-Speech (TTS) System
+
+### Quick Start
+
+**1. Start the TTS Server:**
+```bash
+./start_tts.sh
+```
+
+**2. Open the Web Interface:**
+Open `tts_client.html` in your browser
+
+### Features
+
+- **🎵 Voice Synthesis** - Convert text to speech with 300+ voices
+- **📤 Custom Voices** - Upload your own voice samples
+- **🔍 Voice Browser** - Search and filter voices by language, gender, type
+- **⚙️ Voice Tuning** - Adjust speech rate (-50% to +100%) and pitch
+- **🌍 Multi-Language** - Support for 100+ languages
+- **🔌 REST API** - Programmatic access to all TTS features
+
+### API Usage Examples
+
+**Python:**
+```python
+import requests
+
+# Synthesize speech
+with open('output.mp3', 'wb') as f:
+    response = requests.post('http://localhost:8001/tts/synthesize', 
+        data={
+            'text': 'Hello, this is a test!',
+            'voice': 'en-US-AriaNeural',
+            'rate': '+0%',
+            'pitch': '+0Hz'
+        })
+    f.write(response.content)
+
+# Upload custom voice
+with open('my_voice.wav', 'rb') as f:
+    files = {'file': f}
+    data = {'voice_name': 'My Custom Voice', 'language': 'en-US'}
+    response = requests.post('http://localhost:8001/tts/voices/upload',
+                            files=files, data=data)
+    print(response.json())
+
+# List all voices
+response = requests.get('http://localhost:8001/tts/voices')
+voices = response.json()['voices']
+```
+
+**cURL:**
+```bash
+# Synthesize speech
+curl -X POST "http://localhost:8001/tts/synthesize" \
+  -F "text=Hello world" \
+  -F "voice=en-US-AriaNeural" \
+  --output speech.mp3
+
+# Upload voice
+curl -X POST "http://localhost:8001/tts/voices/upload" \
+  -F "file=@my_voice.wav" \
+  -F "voice_name=My Voice" \
+  -F "language=en-US"
+
+# List voices
+curl http://localhost:8001/tts/voices
+```
+
+### TTS API Endpoints
+
+- **POST /tts/synthesize** - Generate speech from text
+- **GET /tts/voices** - List all available voices
+- **POST /tts/voices/upload** - Upload custom voice sample
+- **DELETE /tts/voices/{voice_id}** - Delete custom voice
+- **GET /tts/download/{filename}** - Download generated audio
+- **DELETE /tts/outputs/clear** - Clear all generated files
+
+### Custom Voice Management
+
+1. **Upload Voice Sample:**
+   - Go to "Upload Voice" tab in `tts_client.html`
+   - Select audio file (WAV, MP3, etc.)
+   - Provide name, language, and gender
+   - Click upload
+
+2. **Use Custom Voice:**
+   - Custom voices are stored in `./voices/` directory
+   - Access via API or web interface
+   - Note: For voice cloning, integrate Coqui TTS or XTTS
+
+3. **Manage Voices:**
+   - Browse all voices in "Browse Voices" tab
+   - Filter by language, type (system/custom)
+   - Test voices with preview button
+   - Delete custom voices as needed
+
+---
 
 ### Option 4: ⚡ Command Line Interface
 
@@ -438,6 +557,7 @@ Error: Could not load libtorchcodec...FFmpeg not installed
 
 ## 📁 Project Files
 
+### Transcription (Speech-to-Text)
 | File | Description |
 |------|-------------|
 | `gradio_app.py` | Gradio web UI server with microphone support |
@@ -446,7 +566,19 @@ Error: Could not load libtorchcodec...FFmpeg not installed
 | `start_gradio.sh` | Launch script for Gradio UI |
 | `start_server.sh` | Launch script for FastAPI server |
 | `test_api.py` | Python test script for API endpoints |
+
+### TTS (Text-to-Speech)
+| File | Description |
+|------|-------------|
+| `tts_server.py` | TTS API server with voice management |
+| `tts_client.html` | Web interface for TTS and voice management |
+| `start_tts.sh` | Launch script for TTS server |
+
+### Core
+| File | Description |
+|------|-------------|
 | `src/insanely_fast_whisper/cli.py` | Original CLI tool |
+| `README.md` | This documentation file |
 
 ---
 

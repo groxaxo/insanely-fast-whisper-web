@@ -167,7 +167,10 @@ cython_debug/
 # Project-specific
 uploads/
 outputs/
+tts_outputs/
+voices/
 *.mp3
 *.wav
 *.m4a
 *.flac
+voice_metadata.json
